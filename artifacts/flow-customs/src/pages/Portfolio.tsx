@@ -53,7 +53,15 @@ function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void
         onClick={e => e.stopPropagation()}
       >
         <video
-          ref={el => { if (el) el.play().catch(() => {}); }}
+          ref={el => {
+            if (!el) return;
+            // Start playback immediately
+            el.play().catch(() => {});
+            // Auto-recover from unexpected stalls or buffering pauses
+            const resume = () => { el.play().catch(() => {}); };
+            el.addEventListener("stalled", resume);
+            el.addEventListener("waiting", resume);
+          }}
           src={video.src}
           controls
           playsInline
@@ -82,8 +90,8 @@ function VideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () => void })
       <div className="relative w-full bg-black" style={{ paddingTop: "177.78%" }}>
         <div className="absolute inset-0">
           <video
-            src={video.src + "#t=0.5"}
-            preload="metadata"
+            src={video.src}
+            preload="none"
             playsInline
             muted
             disablePictureInPicture
@@ -121,8 +129,8 @@ function FeaturedVideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () =>
         onClick={onOpen}
       >
         <video
-          src={video.src + "#t=0.5"}
-          preload="metadata"
+          src={video.src}
+          preload="none"
           playsInline
           muted
           disablePictureInPicture
