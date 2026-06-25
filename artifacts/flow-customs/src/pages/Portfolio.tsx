@@ -1,40 +1,21 @@
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-
-const PLAYLIST_ID = "46wmGTamOub4ZRpROQQ25X";
-
-const SpotifyCorner = forwardRef<HTMLIFrameElement>(function SpotifyCorner(_, ref) {
-  return (
-    <div className="fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl" style={{ width: 320 }}>
-      <iframe
-        ref={ref}
-        src={`https://open.spotify.com/embed/playlist/${PLAYLIST_ID}?utm_source=generator&theme=0&autoplay=1`}
-        width="320"
-        height="152"
-        frameBorder="0"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        loading="lazy"
-        style={{ display: "block" }}
-      />
-    </div>
-  );
-});
 
 const ACCENT = "hsl(220,15%,75%)";
 
 type VideoEntry =
-  | { kind: "short";   id: string; title: string; youtubeId: string }
-  | { kind: "tiktok";  id: string; title: string; tiktokId: string };
+  | { kind: "short";  id: string; title: string; youtubeId: string }
+  | { kind: "local";  id: string; title: string; src: string };
 
 const videos: VideoEntry[] = [
-  { kind: "tiktok",  id: "tt1", title: "Edit",    tiktokId: "7652420772228582670" },
-  { kind: "short",   id: "s1",  title: "Edit #1", youtubeId: "XSMXk3If28w" },
-  { kind: "short",   id: "s2",  title: "Edit #2", youtubeId: "irV6LlVNCk8" },
-  { kind: "short",   id: "s3",  title: "Edit #3", youtubeId: "vJLDlrxtXg0" },
-  { kind: "short",   id: "s4",  title: "Edit #4", youtubeId: "IKY0KtYGgCA" },
-  { kind: "short",   id: "s5",  title: "Edit #5", youtubeId: "wIEp17APlV4" },
-  { kind: "short",   id: "s6",  title: "Edit #6", youtubeId: "2aWTN_53KHs" },
+  { kind: "local",  id: "lv1", title: "Edit",    src: "/videos/featured-edit.mp4" },
+  { kind: "short",  id: "s1",  title: "Edit #1", youtubeId: "XSMXk3If28w" },
+  { kind: "short",  id: "s2",  title: "Edit #2", youtubeId: "irV6LlVNCk8" },
+  { kind: "short",  id: "s3",  title: "Edit #3", youtubeId: "vJLDlrxtXg0" },
+  { kind: "short",  id: "s4",  title: "Edit #4", youtubeId: "IKY0KtYGgCA" },
+  { kind: "short",  id: "s5",  title: "Edit #5", youtubeId: "wIEp17APlV4" },
+  { kind: "short",  id: "s6",  title: "Edit #6", youtubeId: "2aWTN_53KHs" },
 ];
 
 function VideoModal({ video, onClose }: { video: Extract<VideoEntry, { kind: "short" }>; onClose: () => void }) {
@@ -117,22 +98,23 @@ function ShortCard({ video, onOpen }: { video: Extract<VideoEntry, { kind: "shor
   );
 }
 
-function TikTokCard({ video }: { video: Extract<VideoEntry, { kind: "tiktok" }> }) {
+function LocalVideoCard({ video }: { video: Extract<VideoEntry, { kind: "local" }> }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex justify-center"
     >
-      {/* TikTok's native embed dimensions: 325 × 740 */}
-      <div className="rounded-2xl overflow-hidden border border-white/[0.07]" style={{ width: 325 }}>
-        <iframe
-          src={`https://www.tiktok.com/embed/v2/${video.tiktokId}`}
-          width="325"
-          height="740"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          style={{ display: "block", border: "none" }}
+      <div
+        className="rounded-2xl overflow-hidden border border-white/[0.07] bg-black"
+        style={{ width: "min(340px, 100%)" }}
+      >
+        <video
+          src={video.src}
+          controls
+          playsInline
+          preload="metadata"
+          style={{ display: "block", width: "100%", aspectRatio: "9/16", objectFit: "contain", background: "#000" }}
         />
       </div>
     </motion.div>
@@ -178,15 +160,8 @@ export default function Portfolio() {
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<"videos" | "graphics">("videos");
   const [openVideo, setOpenVideo] = useState<Extract<VideoEntry, { kind: "short" }> | null>(null);
-  const spotifyRef = useRef<HTMLIFrameElement>(null);
 
-  // Pause Spotify while a video is open, resume when closed
-  useEffect(() => {
-    const cmd = openVideo ? "pause" : "resume";
-    spotifyRef.current?.contentWindow?.postMessage({ command: cmd }, "https://open.spotify.com");
-  }, [openVideo]);
-
-  const tiktok = videos.filter(v => v.kind === "tiktok") as Extract<VideoEntry, { kind: "tiktok" }>[];
+  const locals = videos.filter(v => v.kind === "local") as Extract<VideoEntry, { kind: "local" }>[];
   const shorts  = videos.filter(v => v.kind === "short")  as Extract<VideoEntry, { kind: "short" }>[];
 
   return (
@@ -258,11 +233,11 @@ export default function Portfolio() {
               transition={{ duration: 0.35 }}
               className="space-y-8"
             >
-              {/* TikTok — featured at the top */}
-              {tiktok.length > 0 && (
+              {/* Local video — featured at the top */}
+              {locals.length > 0 && (
                 <div>
                   <p className="text-[10px] tracking-[0.25em] uppercase text-white/20 font-medium mb-4">Featured</p>
-                  <TikTokCard video={tiktok[0]} />
+                  <LocalVideoCard video={locals[0]} />
                 </div>
               )}
 
@@ -299,7 +274,6 @@ export default function Portfolio() {
         </AnimatePresence>
       </div>
 
-      <SpotifyCorner ref={spotifyRef} />
     </div>
   );
 }
