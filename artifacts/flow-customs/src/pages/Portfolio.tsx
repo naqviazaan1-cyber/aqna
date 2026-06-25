@@ -16,7 +16,7 @@ const videos: VideoEntry[] = [
   { kind: "local", id: "lv7", title: "Edit #6", src: "/videos/edit-6.mp4" },
 ];
 
-function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void }) {
+function VideoModal({ video, onClose, isLandscape = false }: { video: VideoEntry; onClose: () => void; isLandscape?: boolean }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -28,6 +28,10 @@ function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void
     window.dispatchEvent(new Event("spotify-pause"));
     return () => window.dispatchEvent(new Event("spotify-resume"));
   }, []);
+
+  const modalStyle: React.CSSProperties = isLandscape
+    ? { width: "min(860px, 94vw)", aspectRatio: "16/9" }
+    : { width: "min(380px, 90vw)", height: "min(675px, 90vh)" };
 
   return (
     <motion.div
@@ -49,15 +53,13 @@ function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void
 
       <div
         className="relative rounded-2xl overflow-hidden shadow-2xl bg-black"
-        style={{ width: "min(380px, 90vw)", height: "min(675px, 90vh)" }}
+        style={modalStyle}
         onClick={e => e.stopPropagation()}
       >
         <video
           ref={el => {
             if (!el) return;
-            // Start playback immediately
             el.play().catch(() => {});
-            // Auto-recover from unexpected stalls or buffering pauses
             const resume = () => { el.play().catch(() => {}); };
             el.addEventListener("stalled", resume);
             el.addEventListener("waiting", resume);
@@ -189,13 +191,14 @@ export default function Portfolio() {
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<"videos" | "graphics">("videos");
   const [openVideo, setOpenVideo] = useState<VideoEntry | null>(null);
+  const [openVideoLandscape, setOpenVideoLandscape] = useState(false);
   const featured = videos[0];
   const edits = videos.slice(1);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white font-sans overflow-x-hidden select-none">
       <AnimatePresence>
-        {openVideo && <VideoModal video={openVideo} onClose={() => setOpenVideo(null)} />}
+        {openVideo && <VideoModal video={openVideo} onClose={() => { setOpenVideo(null); setOpenVideoLandscape(false); }} isLandscape={openVideoLandscape} />}
       </AnimatePresence>
       <div className="max-w-4xl mx-auto px-6 py-10">
 
@@ -264,7 +267,7 @@ export default function Portfolio() {
               {/* Featured video */}
               <div>
                 <p className="text-[10px] tracking-[0.25em] uppercase text-white/20 font-medium mb-4">Featured</p>
-                <FeaturedVideoCard video={featured} onOpen={() => setOpenVideo(featured)} />
+                <FeaturedVideoCard video={featured} onOpen={() => { setOpenVideo(featured); setOpenVideoLandscape(true); }} />
               </div>
 
               {/* Edits grid */}

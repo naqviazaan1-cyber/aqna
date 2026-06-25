@@ -116,11 +116,12 @@ function App() {
 
   // Pause/resume Spotify when video modal opens/closes
   useEffect(() => {
-    const sendCmd = (cmd: string) => {
-      iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ command: cmd }), "*");
+    const onPause = () => {
+      if (iframeRef.current) iframeRef.current.src = "";
     };
-    const onPause = () => sendCmd("pause");
-    const onResume = () => sendCmd("resume");
+    const onResume = () => {
+      if (iframeRef.current) iframeRef.current.src = SPOTIFY_SRC;
+    };
     window.addEventListener("spotify-pause", onPause);
     window.addEventListener("spotify-resume", onResume);
     return () => {
