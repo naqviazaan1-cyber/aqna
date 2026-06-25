@@ -92,8 +92,12 @@ function VideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () => void })
       <div className="relative w-full bg-black" style={{ paddingTop: "177.78%" }}>
         <div className="absolute inset-0">
           <video
+            ref={el => {
+              if (!el) return;
+              el.addEventListener("loadedmetadata", () => { el.currentTime = 0.5; }, { once: true });
+            }}
             src={video.src}
-            preload="none"
+            preload="metadata"
             playsInline
             muted
             disablePictureInPicture
@@ -131,8 +135,12 @@ function FeaturedVideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () =>
         onClick={onOpen}
       >
         <video
+          ref={el => {
+            if (!el) return;
+            el.addEventListener("loadedmetadata", () => { el.currentTime = 0.5; }, { once: true });
+          }}
           src={video.src}
-          preload="none"
+          preload="metadata"
           playsInline
           muted
           disablePictureInPicture
