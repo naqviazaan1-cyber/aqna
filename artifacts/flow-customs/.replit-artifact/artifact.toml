@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Flow Customs"
+version = "1.0.0"
+id = "artifacts/flow-customs"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22954
+
+[services.development]
+run = "pnpm --filter @workspace/flow-customs run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/flow-customs", "run", "build" ]
+publicDir = "artifacts/flow-customs/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22954"
+BASE_PATH = "/"
