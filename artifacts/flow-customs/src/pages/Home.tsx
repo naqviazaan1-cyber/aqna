@@ -128,14 +128,15 @@ function SideLines() {
 
 function SpotifyPlayer({ visible }: { visible: boolean }) {
   const playlistId = PLAYLIST_URI.replace("spotify:playlist:", "");
-  if (!visible) return null;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.6 }}
-      className="fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl"
-      style={{ width: 320 }}
+    <div
+      className="fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl transition-all duration-700"
+      style={{
+        width: 320,
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        pointerEvents: visible ? "auto" : "none",
+      }}
     >
       <iframe
         src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0&autoplay=1`}
@@ -143,10 +144,9 @@ function SpotifyPlayer({ visible }: { visible: boolean }) {
         height="152"
         frameBorder="0"
         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        loading="lazy"
         style={{ display: "block" }}
       />
-    </motion.div>
+    </div>
   );
 }
 
