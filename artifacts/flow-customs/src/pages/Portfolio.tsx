@@ -188,7 +188,7 @@ export default function Portfolio() {
             Back
           </button>
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <p className="text-[10px] tracking-[0.3em] uppercase text-white/20">Flow Customs</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-white/20">AQNA97123</p>
         </motion.div>
 
         <motion.div

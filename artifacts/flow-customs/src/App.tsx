@@ -103,10 +103,11 @@ function Router({ onEnter, entered }: { onEnter: () => void; entered: boolean })
 }
 
 function App() {
-  const [entered, setEntered] = useState(false);
+  const [entered, setEntered] = useState(() => sessionStorage.getItem("fc_entered") === "1");
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const handleEnter = useCallback(() => {
+    sessionStorage.setItem("fc_entered", "1");
     setEntered(true);
     if (iframeRef.current && !iframeRef.current.src) {
       iframeRef.current.src = SPOTIFY_SRC;
