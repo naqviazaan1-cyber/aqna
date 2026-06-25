@@ -47,8 +47,8 @@ function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void
         onClick={e => e.stopPropagation()}
       >
         <video
+          ref={el => { if (el) el.play().catch(() => {}); }}
           src={video.src}
-          autoPlay
           controls
           playsInline
           disablePictureInPicture

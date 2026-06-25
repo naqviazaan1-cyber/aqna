@@ -1,5 +1,5 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -105,6 +105,14 @@ function Router({ onEnter, entered }: { onEnter: () => void; entered: boolean })
 function App() {
   const [entered, setEntered] = useState(() => sessionStorage.getItem("fc_entered") === "1");
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // If user already entered (sessionStorage), set the src on mount
+  useEffect(() => {
+    if (entered && iframeRef.current && !iframeRef.current.src) {
+      iframeRef.current.src = SPOTIFY_SRC;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleEnter = useCallback(() => {
     sessionStorage.setItem("fc_entered", "1");
