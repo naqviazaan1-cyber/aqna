@@ -4,21 +4,19 @@ import { useLocation } from "wouter";
 
 const ACCENT = "hsl(220,15%,75%)";
 
-type VideoEntry =
-  | { kind: "short";  id: string; title: string; youtubeId: string }
-  | { kind: "local";  id: string; title: string; src: string };
+type VideoEntry = { kind: "local"; id: string; title: string; src: string };
 
 const videos: VideoEntry[] = [
-  { kind: "local",  id: "lv1", title: "Edit",    src: "/videos/featured-edit.mp4" },
-  { kind: "short",  id: "s1",  title: "Edit #1", youtubeId: "XSMXk3If28w" },
-  { kind: "short",  id: "s2",  title: "Edit #2", youtubeId: "irV6LlVNCk8" },
-  { kind: "short",  id: "s3",  title: "Edit #3", youtubeId: "vJLDlrxtXg0" },
-  { kind: "short",  id: "s4",  title: "Edit #4", youtubeId: "IKY0KtYGgCA" },
-  { kind: "short",  id: "s5",  title: "Edit #5", youtubeId: "wIEp17APlV4" },
-  { kind: "short",  id: "s6",  title: "Edit #6", youtubeId: "2aWTN_53KHs" },
+  { kind: "local", id: "lv1", title: "Edit",    src: "/videos/featured-edit.mp4" },
+  { kind: "local", id: "lv2", title: "Edit #1", src: "/videos/edit-1.mp4" },
+  { kind: "local", id: "lv3", title: "Edit #2", src: "/videos/edit-2.mp4" },
+  { kind: "local", id: "lv4", title: "Edit #3", src: "/videos/edit-3.mp4" },
+  { kind: "local", id: "lv5", title: "Edit #4", src: "/videos/edit-4.mp4" },
+  { kind: "local", id: "lv6", title: "Edit #5", src: "/videos/edit-5.mp4" },
+  { kind: "local", id: "lv7", title: "Edit #6", src: "/videos/edit-6.mp4" },
 ];
 
-function VideoModal({ video, onClose }: { video: Extract<VideoEntry, { kind: "short" }>; onClose: () => void }) {
+function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -34,7 +32,6 @@ function VideoModal({ video, onClose }: { video: Extract<VideoEntry, { kind: "sh
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
       onClick={onClose}
     >
-      {/* Close button */}
       <button
         onClick={onClose}
         className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors z-10"
@@ -44,18 +41,17 @@ function VideoModal({ video, onClose }: { video: Extract<VideoEntry, { kind: "sh
         </svg>
       </button>
 
-      {/* Player — tall portrait, stops click bubbling to backdrop */}
       <div
-        className="relative rounded-2xl overflow-hidden shadow-2xl"
-        style={{ width: "min(400px, 90vw)", height: "min(711px, 90vh)" }}
+        className="relative rounded-2xl overflow-hidden shadow-2xl bg-black"
+        style={{ width: "min(380px, 90vw)", height: "min(675px, 90vh)" }}
         onClick={e => e.stopPropagation()}
       >
-        <iframe
-          className="w-full h-full"
-          src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0&vq=hd1080`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowFullScreen
-          style={{ border: "none" }}
+        <video
+          src={video.src}
+          autoPlay
+          controls
+          playsInline
+          style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
         />
       </div>
 
@@ -66,7 +62,7 @@ function VideoModal({ video, onClose }: { video: Extract<VideoEntry, { kind: "sh
   );
 }
 
-function ShortCard({ video, onOpen }: { video: Extract<VideoEntry, { kind: "short" }>; onOpen: () => void }) {
+function VideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -74,12 +70,13 @@ function ShortCard({ video, onOpen }: { video: Extract<VideoEntry, { kind: "shor
       className="rounded-2xl border border-white/[0.07] bg-white/[0.03] overflow-hidden group cursor-pointer"
       onClick={onOpen}
     >
-      {/* 9:16 portrait thumbnail */}
-      <div className="relative w-full" style={{ paddingTop: "177.78%" }}>
-        <div className="absolute inset-0 bg-black">
-          <img
-            src={`https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
-            alt={video.title}
+      <div className="relative w-full bg-black" style={{ paddingTop: "177.78%" }}>
+        <div className="absolute inset-0">
+          <video
+            src={video.src + "#t=0.5"}
+            preload="metadata"
+            playsInline
+            muted
             className="w-full h-full object-cover opacity-70 group-hover:opacity-95 transition-opacity duration-300"
           />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -98,7 +95,7 @@ function ShortCard({ video, onOpen }: { video: Extract<VideoEntry, { kind: "shor
   );
 }
 
-function LocalVideoCard({ video }: { video: Extract<VideoEntry, { kind: "local" }> }) {
+function FeaturedVideoCard({ video }: { video: VideoEntry }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -159,10 +156,9 @@ function ComingSoon() {
 export default function Portfolio() {
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<"videos" | "graphics">("videos");
-  const [openVideo, setOpenVideo] = useState<Extract<VideoEntry, { kind: "short" }> | null>(null);
-
-  const locals = videos.filter(v => v.kind === "local") as Extract<VideoEntry, { kind: "local" }>[];
-  const shorts  = videos.filter(v => v.kind === "short")  as Extract<VideoEntry, { kind: "short" }>[];
+  const [openVideo, setOpenVideo] = useState<VideoEntry | null>(null);
+  const featured = videos[0];
+  const edits = videos.slice(1);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white font-sans overflow-x-hidden select-none">
@@ -233,27 +229,25 @@ export default function Portfolio() {
               transition={{ duration: 0.35 }}
               className="space-y-8"
             >
-              {/* Local video — featured at the top */}
-              {locals.length > 0 && (
-                <div>
-                  <p className="text-[10px] tracking-[0.25em] uppercase text-white/20 font-medium mb-4">Featured</p>
-                  <LocalVideoCard video={locals[0]} />
-                </div>
-              )}
+              {/* Featured video */}
+              <div>
+                <p className="text-[10px] tracking-[0.25em] uppercase text-white/20 font-medium mb-4">Featured</p>
+                <FeaturedVideoCard video={featured} />
+              </div>
 
-              {/* YouTube Shorts — 3-column portrait grid */}
-              {shorts.length > 0 && (
+              {/* Edits grid */}
+              {edits.length > 0 && (
                 <div>
                   <p className="text-[10px] tracking-[0.25em] uppercase text-white/20 font-medium mb-4">Edits</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {shorts.map((v, i) => (
+                    {edits.map((v, i) => (
                       <motion.div
                         key={v.id}
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.06 }}
                       >
-                        <ShortCard video={v} onOpen={() => setOpenVideo(v)} />
+                        <VideoCard video={v} onOpen={() => setOpenVideo(v)} />
                       </motion.div>
                     ))}
                   </div>
