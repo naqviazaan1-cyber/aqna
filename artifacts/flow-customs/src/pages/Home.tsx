@@ -4,8 +4,6 @@ import { useLocation } from "wouter";
 
 const DISCORD_USER_ID = "1510998253603262496";
 const DISCORD_AVATAR_HASH = "64da3dd9a7152682ec26464f48e99024";
-const PLAYLIST_URI = "spotify:playlist:46wmGTamOub4ZRpROQQ25X";
-
 const tools = [
   { name: "Canva",         logo: "/logos/canva.png" },
   { name: "Photopea",      logo: "/logos/photopea.svg" },
@@ -126,32 +124,7 @@ function SideLines() {
   );
 }
 
-function SpotifyPlayer({ visible }: { visible: boolean }) {
-  const playlistId = PLAYLIST_URI.replace("spotify:playlist:", "");
-  return (
-    <div
-      className="fixed bottom-4 right-4 z-50 rounded-xl overflow-hidden shadow-2xl transition-all duration-700"
-      style={{
-        width: 320,
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(24px)",
-        pointerEvents: visible ? "auto" : "none",
-      }}
-    >
-      <iframe
-        src={`https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0&autoplay=1`}
-        width="320"
-        height="152"
-        frameBorder="0"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        style={{ display: "block" }}
-      />
-    </div>
-  );
-}
-
-export default function Home() {
-  const [entered, setEntered] = useState(false);
+export default function Home({ onEnter, entered }: { onEnter?: () => void; entered?: boolean }) {
   const [, navigate] = useLocation();
   const { status, avatarUrl } = useDiscordStatus(DISCORD_USER_ID);
 
@@ -166,7 +139,7 @@ export default function Home() {
             key="entry"
             exit={{ opacity: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#080808] cursor-pointer"
-            onClick={() => setEntered(true)}
+            onClick={() => onEnter?.()}
             data-testid="entry-screen"
           >
             <motion.p
@@ -386,8 +359,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Spotify Player — mounted always so iFrame API can init, but only auto-plays after enter */}
-      <SpotifyPlayer visible={entered} />
     </div>
   );
 }
