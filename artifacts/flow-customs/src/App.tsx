@@ -114,6 +114,21 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Pause/resume Spotify when video modal opens/closes
+  useEffect(() => {
+    const sendCmd = (cmd: string) => {
+      iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ command: cmd }), "*");
+    };
+    const onPause = () => sendCmd("pause");
+    const onResume = () => sendCmd("resume");
+    window.addEventListener("spotify-pause", onPause);
+    window.addEventListener("spotify-resume", onResume);
+    return () => {
+      window.removeEventListener("spotify-pause", onPause);
+      window.removeEventListener("spotify-resume", onResume);
+    };
+  }, []);
+
   const handleEnter = useCallback(() => {
     sessionStorage.setItem("fc_entered", "1");
     setEntered(true);

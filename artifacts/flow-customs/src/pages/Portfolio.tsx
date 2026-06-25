@@ -23,6 +23,12 @@ function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Pause Spotify when modal opens, resume when it closes
+  useEffect(() => {
+    window.dispatchEvent(new Event("spotify-pause"));
+    return () => window.dispatchEvent(new Event("spotify-resume"));
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
