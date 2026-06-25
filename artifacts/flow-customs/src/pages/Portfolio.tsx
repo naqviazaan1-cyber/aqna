@@ -51,6 +51,9 @@ function VideoModal({ video, onClose }: { video: VideoEntry; onClose: () => void
           autoPlay
           controls
           playsInline
+          disablePictureInPicture
+          controlsList="nodownload noremoteplayback"
+          onContextMenu={e => e.preventDefault()}
           style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
         />
       </div>
@@ -77,7 +80,11 @@ function VideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () => void })
             preload="metadata"
             playsInline
             muted
+            disablePictureInPicture
+            controlsList="nodownload noremoteplayback"
+            onContextMenu={e => e.preventDefault()}
             className="w-full h-full object-cover opacity-70 group-hover:opacity-95 transition-opacity duration-300"
+            style={{ pointerEvents: "none" }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -95,7 +102,7 @@ function VideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () => void })
   );
 }
 
-function FeaturedVideoCard({ video }: { video: VideoEntry }) {
+function FeaturedVideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -103,16 +110,27 @@ function FeaturedVideoCard({ video }: { video: VideoEntry }) {
       className="flex justify-center"
     >
       <div
-        className="rounded-2xl overflow-hidden border border-white/[0.07] bg-black"
+        className="rounded-2xl overflow-hidden border border-white/[0.07] bg-black group cursor-pointer relative"
         style={{ width: "min(340px, 100%)" }}
+        onClick={onOpen}
       >
         <video
-          src={video.src}
-          controls
-          playsInline
+          src={video.src + "#t=0.5"}
           preload="metadata"
-          style={{ display: "block", width: "100%", aspectRatio: "9/16", objectFit: "contain", background: "#000" }}
+          playsInline
+          muted
+          disablePictureInPicture
+          controlsList="nodownload noremoteplayback"
+          onContextMenu={e => e.preventDefault()}
+          style={{ display: "block", width: "100%", aspectRatio: "9/16", objectFit: "cover", background: "#000", pointerEvents: "none" }}
         />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -232,7 +250,7 @@ export default function Portfolio() {
               {/* Featured video */}
               <div>
                 <p className="text-[10px] tracking-[0.25em] uppercase text-white/20 font-medium mb-4">Featured</p>
-                <FeaturedVideoCard video={featured} />
+                <FeaturedVideoCard video={featured} onOpen={() => setOpenVideo(featured)} />
               </div>
 
               {/* Edits grid */}
