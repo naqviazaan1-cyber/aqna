@@ -111,7 +111,7 @@ function FeaturedVideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () =>
     >
       <div
         className="rounded-2xl overflow-hidden border border-white/[0.07] bg-black group cursor-pointer relative"
-        style={{ width: "min(340px, 100%)" }}
+        style={{ width: "min(640px, 100%)" }}
         onClick={onOpen}
       >
         <video
@@ -122,7 +122,7 @@ function FeaturedVideoCard({ video, onOpen }: { video: VideoEntry; onOpen: () =>
           disablePictureInPicture
           controlsList="nodownload noremoteplayback"
           onContextMenu={e => e.preventDefault()}
-          style={{ display: "block", width: "100%", aspectRatio: "9/16", objectFit: "cover", background: "#000", pointerEvents: "none" }}
+          style={{ display: "block", width: "100%", aspectRatio: "16/9", objectFit: "cover", background: "#000", pointerEvents: "none" }}
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
