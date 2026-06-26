@@ -2,15 +2,30 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { copyFileSync, mkdirSync } from "fs";
 
 const port = Number(process.env.PORT ?? 3000);
 const basePath = process.env.BASE_PATH ?? "/";
+
+const copySpaRoutes = {
+  name: "copy-spa-routes",
+  closeBundle() {
+    const outDir = path.resolve(import.meta.dirname, "dist/public");
+    const src = path.join(outDir, "index.html");
+    for (const route of ["portfolio"]) {
+      const dir = path.join(outDir, route);
+      mkdirSync(dir, { recursive: true });
+      copyFileSync(src, path.join(dir, "index.html"));
+    }
+  },
+};
 
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
+    copySpaRoutes,
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
