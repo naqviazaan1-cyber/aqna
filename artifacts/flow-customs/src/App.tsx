@@ -29,6 +29,8 @@ function AudioPlayer({ visible, onFirstPlay }: { visible: boolean; onFirstPlay?:
   const [trackIdx, setTrackIdx]     = useState(0);
   const [playing, setPlaying]       = useState(false);
   const [collapsed, setCollapsed]   = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration]       = useState(0);
 
   const track = TRACKS[trackIdx];
 
@@ -45,11 +47,18 @@ function AudioPlayer({ visible, onFirstPlay }: { visible: boolean; onFirstPlay?:
     });
     audio.addEventListener("play",  () => setPlaying(true));
     audio.addEventListener("pause", () => setPlaying(false));
+    audio.addEventListener("timeupdate", () => setCurrentTime(audio.currentTime));
+    audio.addEventListener("durationchange", () => {
+      if (isFinite(audio.duration)) setDuration(audio.duration);
+    });
+    audio.addEventListener("loadedmetadata", () => {
+      if (isFinite(audio.duration)) setDuration(audio.duration);
+    });
 
     return () => {
       audio.pause();
       cancelAnimationFrame(rafRef.current);
-      audioCtxRef.current?.close();
+      if (audioCtxRef.current?.state !== "closed") audioCtxRef.current?.close();
     };
   }, []);
 
@@ -60,10 +69,27 @@ function AudioPlayer({ visible, onFirstPlay }: { visible: boolean; onFirstPlay?:
     const audio = audioRef.current;
     if (!audio) return;
     const wasPlaying = !audio.paused;
+    setCurrentTime(0);
+    setDuration(0);
     audio.src = TRACKS[trackIdx].src;
     if (wasPlaying) audio.play().catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackIdx]);
+
+  const seek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = pct * duration;
+    setCurrentTime(audio.currentTime);
+  }, [duration]);
+
+  const fmt = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
 
   // Connect Web Audio API once on first play
   const connectAnalyser = useCallback(() => {
@@ -227,20 +253,38 @@ function AudioPlayer({ visible, onFirstPlay }: { visible: boolean; onFirstPlay?:
             </div>
           </div>
 
-          {/* Track dots */}
-          <div className="flex items-center gap-1.5 px-4 pb-3">
-            {TRACKS.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setTrackIdx(i)}
-                className="rounded-full transition-all duration-200"
-                style={{
-                  width: i === trackIdx ? "16px" : "5px",
-                  height: "5px",
-                  background: i === trackIdx ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)",
-                }}
+          {/* Progress bar + time */}
+          <div className="px-4 pb-3 space-y-1.5">
+            {/* Seekable bar */}
+            <div
+              className="relative h-1 rounded-full bg-white/[0.08] cursor-pointer group"
+              onClick={seek}
+            >
+              <div
+                className="absolute left-0 top-0 h-full rounded-full bg-white/60 group-hover:bg-white/80 transition-colors"
+                style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
               />
-            ))}
+            </div>
+            {/* Time + track dots row */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] tabular-nums text-white/30">
+                {fmt(currentTime)} / {duration ? fmt(duration) : "--:--"}
+              </span>
+              <div className="flex items-center gap-1.5">
+                {TRACKS.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setTrackIdx(i)}
+                    className="rounded-full transition-all duration-200"
+                    style={{
+                      width: i === trackIdx ? "14px" : "4px",
+                      height: "4px",
+                      background: i === trackIdx ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
