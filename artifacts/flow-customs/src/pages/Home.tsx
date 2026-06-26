@@ -1,6 +1,186 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
+
+type ReviewData = { id: number; name: string; rating: number; content: string; createdAt: string };
+
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onMouseEnter={() => setHovered(n)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onChange(n)}
+          className="text-2xl transition-transform duration-100 hover:scale-110"
+          style={{ color: n <= (hovered || value) ? "#facc15" : "rgba(255,255,255,0.15)" }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReviewCard({ review }: { review: ReviewData }) {
+  const date = new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-2"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-white/80 truncate">{review.name}</p>
+        <p className="text-[10px] text-white/25 shrink-0">{date}</p>
+      </div>
+      <div className="flex gap-0.5">
+        {[1,2,3,4,5].map(n => (
+          <span key={n} style={{ color: n <= review.rating ? "#facc15" : "rgba(255,255,255,0.12)", fontSize: 14 }}>★</span>
+        ))}
+      </div>
+      <p className="text-sm text-white/50 leading-relaxed">{review.content}</p>
+    </motion.div>
+  );
+}
+
+function ReviewsSection() {
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [alreadyReviewed] = useState(() => localStorage.getItem("fc_reviewed") === "1");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [rating, setRating] = useState(0);
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(alreadyReviewed);
+  const [error, setError] = useState("");
+
+  const fetchReviews = useCallback(async () => {
+    try {
+      const res = await fetch("/api/reviews");
+      const data = await res.json();
+      setReviews(data.reviews ?? []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchReviews(); }, [fetchReviews]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating === 0) { setError("Please select a star rating."); return; }
+    setError("");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, rating, content }),
+      });
+      const data = await res.json();
+      if (res.status === 409) {
+        setError("You've already left a review. Thanks!");
+        localStorage.setItem("fc_reviewed", "1");
+        setSubmitted(true);
+      } else if (!res.ok) {
+        setError(data.error ?? "Something went wrong.");
+      } else {
+        localStorage.setItem("fc_reviewed", "1");
+        setSubmitted(true);
+        setReviews(prev => [data.review, ...prev]);
+      }
+    } catch {
+      setError("Network error. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.39 }}
+      className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 space-y-5"
+    >
+      <div>
+        <p className="text-[10px] tracking-[0.25em] uppercase text-white/30 font-medium mb-1">Client Reviews</p>
+        <h2 className="text-base font-black text-white">What people say</h2>
+      </div>
+
+      {!submitted ? (
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <p className="text-xs text-white/30 tracking-wide">Leave a review — one per person.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Your name"
+              maxLength={80}
+              className="w-full rounded-lg bg-white/[0.05] border border-white/[0.08] px-3 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/20 transition-colors"
+            />
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="Your email (not shown publicly)"
+              className="w-full rounded-lg bg-white/[0.05] border border-white/[0.08] px-3 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/20 transition-colors"
+            />
+          </div>
+          <StarPicker value={rating} onChange={setRating} />
+          <textarea
+            required
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder="Share your experience working with aqna97123..."
+            minLength={5}
+            maxLength={500}
+            rows={3}
+            className="w-full rounded-lg bg-white/[0.05] border border-white/[0.08] px-3 py-2.5 text-sm text-white placeholder-white/25 outline-none focus:border-white/20 transition-colors resize-none"
+          />
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-5 py-2 rounded-lg text-xs font-semibold tracking-widest uppercase bg-white text-black hover:bg-white/90 disabled:opacity-40 transition-all duration-200"
+          >
+            {submitting ? "Submitting…" : "Submit Review"}
+          </button>
+        </form>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 text-center"
+        >
+          <p className="text-2xl mb-1">🙌</p>
+          <p className="text-sm font-semibold text-white/70">Thanks for your review!</p>
+        </motion.div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
+        </div>
+      ) : reviews.length === 0 ? (
+        <p className="text-sm text-white/20 text-center py-4">No reviews yet — be the first!</p>
+      ) : (
+        <div className="space-y-3">
+          {reviews.map(r => <ReviewCard key={r.id} review={r} />)}
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 const DISCORD_USER_ID = "1510998253603262496";
 const DISCORD_AVATAR_HASH = "64da3dd9a7152682ec26464f48e99024";
@@ -331,6 +511,9 @@ export default function Home({ onEnter, entered }: { onEnter?: () => void; enter
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                 </svg>
               </motion.button>
+
+              {/* Reviews */}
+              <ReviewsSection />
 
               {/* Connect Card */}
               <motion.div
